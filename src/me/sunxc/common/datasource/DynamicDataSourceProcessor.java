@@ -47,7 +47,7 @@ import org.springframework.util.ReflectionUtils;
  *                                  通过设置事务传播行为：NOT_SUPPORTS实现（连接是尽快释放）                
  *                                  『此处借助了 NOT_SUPPORTS会挂起之前的事务进行操作 然后再恢复之前事务完成的』
  * 4、配置方式
- *  <bean id="dynamicDataSourceTransactionProcessor" class="cn.yunyoyo.common.datasource.ReadWriteDataSourceProcessor">
+ *  <bean id="dynamicDataSourceTransactionProcessor" class="me.sunxc.common.datasource.ReadWriteDataSourceProcessor">
  *      <property name="forceChoiceReadWhenWrite" value="false"/>
  *  </bean>
  * 
@@ -73,8 +73,8 @@ import org.springframework.util.ReflectionUtils;
  *  4.1、此处order = Integer.MIN_VALUE 即最高的优先级
  *  4.2、切入点：txPointcut 和 实施事务的切入点一样
  *  4.3、doChoiceReadOrWriteDB方法用于决策是走读/写库的，请参考
- *       @see cn.yunyoyo.common.datasource.ReadWriteDataSourceChoice
- *       @see cn.yunyoyo.common.datasource.DynamicDataSource
+ *       @see me.sunxc.common.datasource.ReadWriteDataSourceChoice
+ *       @see me.sunxc.common.datasource.DynamicDataSource
  * </pre>
  * @author xianchao.sun@yunyoyo.cn
  */
