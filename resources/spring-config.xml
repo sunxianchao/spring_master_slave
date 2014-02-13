@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.1.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+       ">
+
+
+	<!-- 扫描注解Bean -->
+	<context:component-scan base-package="me.sunxc">
+		<context:exclude-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+
+	<context:property-placeholder location="resources.properties" />
+
+	<!-- DataSource -->
+	<bean id="writeDataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${write.connection.driver_class}" />
+		<property name="url" value="${write.connection.url}" />
+		<property name="username" value="${write.connection.username}" />
+		<property name="password" value="${write.connection.password}" />
+		<!-- 连接池启动时的初始值 -->
+		<property name="initialSize" value="${write.jdbc.initConnections}" />
+		<!-- 连接池的最大值 -->
+		<property name="maxActive" value="${write.jdbc.poolSize}" />
+		<!-- 最大空闲值.当经过一个高峰时间后，连接池可以慢慢将已经用不到的连接慢慢释放一部分，一直减少到maxIdle为止 -->
+		<property name="maxIdle" value="2" />
+		<!-- 最小空闲值.当空闲的连接数少于阀值时，连接池就会预申请去一些连接，以免洪峰来时来不及申请 -->
+		<property name="minIdle" value="1" />
+		<!-- 是否自动回收超时连接 -->
+		<property name="removeAbandoned" value="true" />
+		<!-- 设置被遗弃的连接的超时的时间（以秒数为单位），即当一个连接被遗弃的时间超过设置的时间，则它会自动转换成可利用的连接。
+		默认的超时时间是300秒 -->
+		<property name="removeAbandonedTimeout" value="30" />
+		<!-- 是否在自动回收超时连接的时候打印连接的超时错误 -->
+		<property name="logAbandoned" value="true" />
+		<property name="validationQuery" value="select 1" />
+		<property name="testOnBorrow" value="true" />
+		<property name="testWhileIdle" value="true" />
+		<property name="timeBetweenEvictionRunsMillis" value="3600000" />
+		<property name="minEvictableIdleTimeMillis" value="18000000" />
+	</bean>
+
+	<!-- DataSource -->
+	<bean id="readDataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${read.connection.driver_class}" />
+		<property name="url" value="${read.connection.url}" />
+		<property name="username" value="${read.connection.username}" />
+		<property name="password" value="${read.connection.password}" />
+		<!-- 连接池启动时的初始值 -->
+		<property name="initialSize" value="${read.jdbc.initConnections}" />
+		<!-- 连接池的最大值 -->
+		<property name="maxActive" value="${read.jdbc.poolSize}" />
+		<!-- 最大空闲值.当经过一个高峰时间后，连接池可以慢慢将已经用不到的连接慢慢释放一部分，一直减少到maxIdle为止 -->
+		<property name="maxIdle" value="2" />
+		<!-- 最小空闲值.当空闲的连接数少于阀值时，连接池就会预申请去一些连接，以免洪峰来时来不及申请 -->
+		<property name="minIdle" value="1" />
+		<!-- 是否自动回收超时连接 -->
+		<property name="removeAbandoned" value="true" />
+		<!-- 设置被遗弃的连接的超时的时间（以秒数为单位），即当一个连接被遗弃的时间超过设置的时间，则它会自动转换成可利用的连接。
+		默认的超时时间是300秒 -->
+		<property name="removeAbandonedTimeout" value="30" />
+		<!-- 是否在自动回收超时连接的时候打印连接的超时错误 -->
+		<property name="logAbandoned" value="true" />
+		<property name="validationQuery" value="select 1" />
+		<property name="testOnBorrow" value="true" />
+		<property name="testWhileIdle" value="true" />
+		<property name="timeBetweenEvictionRunsMillis" value="3600000" />
+		<property name="minEvictableIdleTimeMillis" value="18000000" />
+	</bean>
+
+	<bean id="readWriteDataSource" class="me.sunxc.common.datasource.DynamicDataSource">
+		<property name="writeDataSource" ref="writeDataSource" />
+		<property name="readDataSourceMap">
+			<map>
+				<entry key="readDataSource1" value-ref="readDataSource" />
+				<entry key="readDataSource2" value-ref="readDataSource" />
+				<entry key="readDataSource3" value-ref="readDataSource" />
+				<entry key="readDataSource4" value-ref="readDataSource" />
+			</map>
+		</property>
+	</bean>
+
+	<bean id="readWriteDataSourceProcessor"
+		class="me.sunxc.common.datasource.DynamicDataSourceProcessor">
+		<property name="forceChoiceReadWhenWrite" value="false" />
+	</bean>
+
+	<aop:config expose-proxy="true">
+		<!-- 定义切入点，可以重复利用，只对业务逻辑层实施事务 -->
+		<aop:pointcut id="txPointcut"
+			expression="execution(* me.sunxc..service..*.*(..))" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="txPointcut" />
+
+		<!-- -2147483648=Integer.MIN_VALUE 即最高的优先级,定义切面，通过AOP切面实现读/写库选择 -->
+		<aop:aspect order="-2147483648" ref="readWriteDataSourceProcessor">
+			<aop:around pointcut-ref="txPointcut" method="doChoiceReadOrWriteDB" />
+		</aop:aspect>
+	</aop:config>
+
+
+	<bean id="txManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="readWriteDataSource" />
+	</bean>
+
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<tx:method name="save*" propagation="REQUIRED" />
+			<tx:method name="add*" propagation="REQUIRED" />
+			<tx:method name="create*" propagation="REQUIRED" />
+			<tx:method name="insert*" propagation="REQUIRED" />
+			<tx:method name="update*" propagation="REQUIRED" />
+			<tx:method name="merge*" propagation="REQUIRED" />
+			<tx:method name="del*" propagation="REQUIRED" />
+			<tx:method name="remove*" propagation="REQUIRED" />
+
+			<tx:method name="put*" read-only="true" />
+			<tx:method name="query*" read-only="true" />
+			<tx:method name="use*" read-only="true" />
+			<tx:method name="get*" read-only="true" />
+			<tx:method name="count*" read-only="true" />
+			<tx:method name="find*" read-only="true" />
+			<tx:method name="list*" read-only="true" />
+
+			<tx:method name="*" propagation="REQUIRED" />
+		</tx:attributes>
+	</tx:advice>
+
+</beans>
