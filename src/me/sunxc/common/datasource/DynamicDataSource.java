@@ -19,8 +19,8 @@ import org.springframework.util.CollectionUtils;
  * 读/写动态选择数据库实现
  * 目前实现功能
  *   一写库多读库选择功能，请参考
- *      @see cn.yunyoyo.common.datasource.ReadWriteDataSourceChoice
-        @see cn.yunyoyo.common.datasource.ReadWriteDataSourceChoice.DataSourceType
+ *      @see me.sunxc.common.datasource.ReadWriteDataSourceChoice
+        @see me.sunxc.common.datasource.ReadWriteDataSourceChoice.DataSourceType
  *   
  *   默认按顺序轮询使用读库
  *   默认选择写库

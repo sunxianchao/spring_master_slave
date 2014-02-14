@@ -18,57 +18,92 @@
 
 	<context:property-placeholder location="resources.properties" />
 
-	<bean id="writeDataSource" class="org.logicalcobwebs.proxool.ProxoolDataSource">
-		<property name="alias" value="writeDataSource" />
-		<property name="driver" value="${write.connection.driver_class}" />
-		<property name="driverUrl" value="${write.connection.url}" />
-		<property name="user" value="${write.connection.username}" />
+	<!-- DataSource -->
+	<bean id="writeDataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${write.connection.driver_class}" />
+		<property name="url" value="${write.connection.url}" />
+		<property name="username" value="${write.connection.username}" />
 		<property name="password" value="${write.connection.password}" />
-		<property name="maximumConnectionCount" value="${write.proxool.maximum.connection.count}" />
-		<property name="minimumConnectionCount" value="${write.proxool.minimum.connection.count}" />
-		<property name="statistics" value="${write.proxool.statistics}" />
-		<property name="simultaneousBuildThrottle" value="${write.proxool.simultaneous.build.throttle}" />
+		<!-- 连接池启动时的初始值 -->
+		<property name="initialSize" value="${write.jdbc.initConnections}" />
+		<!-- 连接池的最大值 -->
+		<property name="maxActive" value="${write.jdbc.poolSize}" />
+		<!-- 最大空闲值.当经过一个高峰时间后，连接池可以慢慢将已经用不到的连接慢慢释放一部分，一直减少到maxIdle为止 -->
+		<property name="maxIdle" value="2" />
+		<!-- 最小空闲值.当空闲的连接数少于阀值时，连接池就会预申请去一些连接，以免洪峰来时来不及申请 -->
+		<property name="minIdle" value="1" />
+		<!-- 是否自动回收超时连接 -->
+		<property name="removeAbandoned" value="true" />
+		<!-- 设置被遗弃的连接的超时的时间（以秒数为单位），即当一个连接被遗弃的时间超过设置的时间，则它会自动转换成可利用的连接。
+		默认的超时时间是300秒 -->
+		<property name="removeAbandonedTimeout" value="30" />
+		<!-- 是否在自动回收超时连接的时候打印连接的超时错误 -->
+		<property name="logAbandoned" value="true" />
+		<property name="validationQuery" value="select 1" />
+		<property name="testOnBorrow" value="true" />
+		<property name="testWhileIdle" value="true" />
+		<property name="timeBetweenEvictionRunsMillis" value="3600000" />
+		<property name="minEvictableIdleTimeMillis" value="18000000" />
 	</bean>
 
-	<bean id="readDataSource1" class="org.logicalcobwebs.proxool.ProxoolDataSource">
-		<property name="alias" value="readDataSource" />
-		<property name="driver" value="${read.connection.driver_class}" />
-		<property name="driverUrl" value="${read.connection.url}" />
-		<property name="user" value="${read.connection.username}" />
+	<!-- DataSource -->
+	<bean id="readDataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${read.connection.driver_class}" />
+		<property name="url" value="${read.connection.url}" />
+		<property name="username" value="${read.connection.username}" />
 		<property name="password" value="${read.connection.password}" />
-		<property name="maximumConnectionCount" value="${read.proxool.maximum.connection.count}" />
-		<property name="minimumConnectionCount" value="${read.proxool.minimum.connection.count}" />
-		<property name="statistics" value="${read.proxool.statistics}" />
-		<property name="simultaneousBuildThrottle" value="${read.proxool.simultaneous.build.throttle}" />
+		<!-- 连接池启动时的初始值 -->
+		<property name="initialSize" value="${read.jdbc.initConnections}" />
+		<!-- 连接池的最大值 -->
+		<property name="maxActive" value="${read.jdbc.poolSize}" />
+		<!-- 最大空闲值.当经过一个高峰时间后，连接池可以慢慢将已经用不到的连接慢慢释放一部分，一直减少到maxIdle为止 -->
+		<property name="maxIdle" value="2" />
+		<!-- 最小空闲值.当空闲的连接数少于阀值时，连接池就会预申请去一些连接，以免洪峰来时来不及申请 -->
+		<property name="minIdle" value="1" />
+		<!-- 是否自动回收超时连接 -->
+		<property name="removeAbandoned" value="true" />
+		<!-- 设置被遗弃的连接的超时的时间（以秒数为单位），即当一个连接被遗弃的时间超过设置的时间，则它会自动转换成可利用的连接。
+		默认的超时时间是300秒 -->
+		<property name="removeAbandonedTimeout" value="30" />
+		<!-- 是否在自动回收超时连接的时候打印连接的超时错误 -->
+		<property name="logAbandoned" value="true" />
+		<property name="validationQuery" value="select 1" />
+		<property name="testOnBorrow" value="true" />
+		<property name="testWhileIdle" value="true" />
+		<property name="timeBetweenEvictionRunsMillis" value="3600000" />
+		<property name="minEvictableIdleTimeMillis" value="18000000" />
 	</bean>
 
-	<bean id="readWriteDataSource" class="me.sunxc.common.datasource.ReadWriteDataSource">
+	<bean id="readWriteDataSource" class="me.sunxc.common.datasource.DynamicDataSource">
 		<property name="writeDataSource" ref="writeDataSource" />
 		<property name="readDataSourceMap">
 			<map>
-				<entry key="readDataSource1" value-ref="readDataSource1" />
-				<entry key="readDataSource2" value-ref="readDataSource1" />
-				<entry key="readDataSource3" value-ref="readDataSource1" />
-				<entry key="readDataSource4" value-ref="readDataSource1" />
+				<entry key="readDataSource1" value-ref="readDataSource" />
+				<entry key="readDataSource2" value-ref="readDataSource" />
+				<entry key="readDataSource3" value-ref="readDataSource" />
+				<entry key="readDataSource4" value-ref="readDataSource" />
 			</map>
 		</property>
 	</bean>
 
-	<bean id="readWriteDataSourceTransactionProcessor"
-		class="me.sunxc.common.datasource.ReadWriteDataSourceProcessor">
+	<bean id="readWriteDataSourceProcessor"
+		class="me.sunxc.common.datasource.DynamicDataSourceProcessor">
 		<property name="forceChoiceReadWhenWrite" value="true" />
 	</bean>
 
 	<aop:config expose-proxy="true">
-		<!-- 只对业务逻辑层实施事务 -->
+		<!-- 定义切入点，可以重复利用，只对业务逻辑层实施事务 -->
 		<aop:pointcut id="txPointcut"
 			expression="execution(* me.sunxc..service..*.*(..))" />
 		<aop:advisor advice-ref="txAdvice" pointcut-ref="txPointcut" />
-		<aop:aspect order="-2147483648" ref="readWriteDataSourceTransactionProcessor">
-			<aop:around pointcut-ref="txPointcut" method="determineReadOrWriteDB" />
+
+		<!-- -2147483648=Integer.MIN_VALUE 即最高的优先级,定义切面，通过AOP切面实现读/写库选择 -->
+		<aop:aspect order="-2147483648" ref="readWriteDataSourceProcessor">
+			<aop:around pointcut-ref="txPointcut" method="doChoiceReadOrWriteDB" />
 		</aop:aspect>
 	</aop:config>
-
 
 
 	<bean id="txManager"

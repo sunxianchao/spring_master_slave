@@ -88,7 +88,7 @@
 		</property>
 	</bean>
 
-	<bean id="readWriteDataSourceProcessor"
+	<bean id="dynamicDataSourceTransactionProcessor"
 		class="me.sunxc.common.datasource.DynamicDataSourceProcessor">
 		<property name="forceChoiceReadWhenWrite" value="false" />
 	</bean>
@@ -100,7 +100,7 @@
 		<aop:advisor advice-ref="txAdvice" pointcut-ref="txPointcut" />
 
 		<!-- -2147483648=Integer.MIN_VALUE 即最高的优先级,定义切面，通过AOP切面实现读/写库选择 -->
-		<aop:aspect order="-2147483648" ref="readWriteDataSourceProcessor">
+		<aop:aspect order="-2147483648" ref="dynamicDataSourceTransactionProcessor">
 			<aop:around pointcut-ref="txPointcut" method="doChoiceReadOrWriteDB" />
 		</aop:aspect>
 	</aop:config>
